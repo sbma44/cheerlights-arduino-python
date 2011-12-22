@@ -2,11 +2,13 @@ import gecoloreffects, scrapelib, json, time
 
 color_mappings = {
     'blue': gecoloreffects.Light.XMAS_COLOR_BLUE(),
+    'white': gecoloreffects.Light.XMAS_COLOR_WHITE(),    
     'warmwhite': gecoloreffects.Light.XMAS_COLOR_WHITE(),    
     'yellow': gecoloreffects.Light.XMAS_COLOR_YELLOW(),
     'green': gecoloreffects.Light.XMAS_COLOR_GREEN(),    
     'red': gecoloreffects.Light.XMAS_COLOR_RED(),
     'purple': gecoloreffects.Light.XMAS_COLOR_PURPLE(),
+    'magenta': gecoloreffects.Light.XMAS_COLOR_PURPLE(),
     'cyan': gecoloreffects.Light.XMAS_COLOR_CYAN(),
     'orange': gecoloreffects.Light.XMAS_COLOR_ORANGE()
 }
