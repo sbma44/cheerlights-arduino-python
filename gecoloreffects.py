@@ -85,7 +85,6 @@ class Controller(object):
         self.ser.write('I')
         for (i,l) in enumerate(self.lights):
             self.ser.write(chr(l.get_intensity()))            
-            self.lights[i].intensity = min(max(0, l.intensity + step), Light.MAX_INTENSITY)
 
         # wait for ack
         self.ser.readline()
