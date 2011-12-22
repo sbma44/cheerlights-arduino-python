@@ -60,6 +60,7 @@ class Light(object):
         self.safe()
         return 0xFF & self.intensity
         
+    # deprecated
     def get_color(self):
         self.safe()
         return ( (0xFF & ((self.r << 4) | self.g)), (0xFF & self.b) )
@@ -92,10 +93,16 @@ class Controller(object):
     def update_hue(self):
         self.ser.write('H')
         
-        for l in self.lights:
-            color_bytes = l.get_color()
-            self.ser.write(chr(color_bytes[0]))
-            self.ser.write(chr(color_bytes[1]))
+        for i in range(0, len(self.lights)/2):
+            light_a = self.lights[i*2]
+            light_b = self.lights[(i*2)+1]
+
+            light_a.safe()
+            light_b.safe()
+            
+            self.ser.write(chr((light_a.r<<4) | light_a.g))
+            self.ser.write(chr((light_a.b<<4) | light_b.r))
+            self.ser.write(chr((light_b.g<<4) | light_b.b))            
 
         # wait for ack
         self.ser.readline()

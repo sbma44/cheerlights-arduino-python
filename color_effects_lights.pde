@@ -170,16 +170,18 @@ void loop()
             Serial.println('#');
         }    
         else if(command=='H') {
-            // wait until there's 100 bytes of hue data -- 2 bytes per light
-            while(Serial.available()<(XMAS_LIGHT_COUNT*2)) {
+            // wait until there's 75 bytes of hue data -- 12 bits per light
+            while(Serial.available()<(XMAS_LIGHT_COUNT*1.5)) {
                 delayMicroseconds(5);
             }
       
             // read the hue data and assign it
-            for(int i=0;i<XMAS_LIGHT_COUNT;i++) {
+            for(int i=0;i<(XMAS_LIGHT_COUNT/2);i++) {
                 byte b1 = Serial.read();
                 byte b2 = Serial.read();
-                light_hue_array[i] = xmas_color((0xF & (b1>>4)), (b1 & 0xF), (0xF & b2));      
+                byte b3 = Serial.read();
+                light_hue_array[i*2] = xmas_color((b1>>4), (b1 & 0xF), (b2>>4));      
+                light_hue_array[(i*2)+1] = xmas_color((0xF & b2), (b3>>4), (0xF & b3));      
             }
             changed = true;
             Serial.println('#');
