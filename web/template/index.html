@@ -1,0 +1,42 @@
+<!DOCTYPE html> 
+<html> 
+	<head> 	
+	<title>{{ title }}</title>
+	<script type="text/javascript" src="/static/jquery-1.4.3.min.js"></script>
+  <style type="text/css">
+  body { margin: 0; padding: 0;}  
+  a.button { 
+    display: block;
+    width: 100%;
+    height: 100px;
+    text-decoration: none;
+  }
+  #red { background-color: red; }
+  #orange { background-color: orange; }
+  #yellow { background-color: yellow; }
+  #green { background-color: green; }
+  #blue { background-color: blue; }
+  #purple { background-color: purple; } 
+  </style>
+</head> 
+<body> 
+
+<a href="#" class="button" id="red">&nbsp;</a>
+<a href="#" class="button" id="orange">&nbsp;</a>
+<a href="#" class="button" id="yellow">&nbsp;</a>
+<a href="#" class="button" id="green">&nbsp;</a>
+<a href="#" class="button" id="blue">&nbsp;</a>
+<a href="#" class="button" id="purple">&nbsp;</a>
+
+<script type="text/javascript">
+$(function(){
+  $('a.button').click(function(){
+    var this_id = $(this).attr('id');
+    $.get(('/action?color=' + this_id), function() {    
+    });
+    return false;
+  });
+});  
+</script>
+</body>
+</html>
