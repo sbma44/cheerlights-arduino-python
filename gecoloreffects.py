@@ -1,4 +1,6 @@
 import serial, random, time, colorsys
+from settings import *
+
 
 class Light(object):
     MAX_INTENSITY = 0xCC
@@ -67,18 +69,14 @@ class Light(object):
 
 class Controller(object):
 
-    SERIAL_PORT = '/dev/tty.usbmodem241431'
-    SERIAL_RATE = 115200
-    NUM_LIGHTS = 50
-
     def __init__(self):
         super(Controller, self).__init__()
 
         self.lights = []
-        for i in range(0, self.NUM_LIGHTS):
+        for i in range(0, NUM_LIGHTS):
             self.lights.append(Light().random_color())
 
-        self.ser = serial.Serial(self.SERIAL_PORT, self.SERIAL_RATE)
+        self.ser = serial.Serial(SERIAL_PORT, SERIAL_RATE)
         time.sleep(2) # wait for the Arduino to reboot
 
     def update_intensity(self):

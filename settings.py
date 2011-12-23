@@ -1,0 +1,3 @@
+SERIAL_PORT = '/dev/tty.usbmodem241431'
+SERIAL_RATE = 115200
+NUM_LIGHTS = 50
