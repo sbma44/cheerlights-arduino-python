@@ -1,0 +1,4 @@
+bpython==0.9.7
+httplib2==0.7.2
+pyserial==2.6
+scrapelib==0.5.6
