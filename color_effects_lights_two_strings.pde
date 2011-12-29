@@ -167,6 +167,7 @@ xmas_color_t xmas_color(uint8_t r,uint8_t g,uint8_t b) {
   
 void setup()  
 {  
+    // these pins are hardcoded in the manipulation of PORTD. no way around it to achieve the speed we need.
     pinMode(5, OUTPUT);
     pinMode(4, OUTPUT);
 
@@ -174,14 +175,28 @@ void setup()
  
     Serial.begin(115200);
   
+  
+    randomSeed(analogRead(0));
+    xmas_color_t random_colors[] = { XMAS_COLOR_RED, XMAS_COLOR_GREEN, XMAS_COLOR_ORANGE, XMAS_COLOR_BLUE, XMAS_COLOR_MAGENTA, XMAS_COLOR_YELLOW, XMAS_COLOR_CYAN };
+    xmas_color_t chosen = random_colors[random(255) % 7];
+    xmas_color_t chosen2 = random_colors[random(255) % 7];
+  
     for(int i=0;i<XMAS_LIGHT_COUNT;i++) {
-        light_hue_array[i] = XMAS_COLOR_CYAN;
+        light_hue_array[i] = (i<XMAS_LIGHTS_PER_STRING) ? chosen : chosen2;
         light_intensity_array[i] = XMAS_DEFAULT_INTENSITY;
     } 
 
     xmas_reflect_array_2(light_hue_array, light_intensity_array);
 }  
- 
+   
+void wahoowa() {
+  for(int i=0;i<XMAS_LIGHT_COUNT;i++) {
+    light_hue_array[i] = ((i%2)==0) ? XMAS_COLOR_BLUE : XMAS_COLOR_ORANGE;
+  }
+  xmas_reflect_array_2(light_hue_array, light_intensity_array);
+  delay(500);
+}  
+
    
 void loop()  
 { 
@@ -189,45 +204,69 @@ void loop()
   
     if(Serial.available()>0) {
     
-        // hue or intensity?
-        char command = Serial.read();
-        if (command=='I') {
+      // hue or intensity?
+      char command = Serial.read();
+      if (command=='I') {
+          // wait until there's 100 bytes of hue data -- 1 byte per light
+          while(Serial.available()<(XMAS_LIGHT_COUNT)) {
+              delayMicroseconds(1);
+          }
       
-            // wait until there's 50 bytes of hue data -- 1 byte per light
-            while(Serial.available()<(XMAS_LIGHT_COUNT)) {
-                delayMicroseconds(5);
-            }
-      
-            // read the intensity data & assign it
-            for(int i=0;i<XMAS_LIGHT_COUNT;i++) {
-                light_intensity_array[i] = min(XMAS_DEFAULT_INTENSITY, Serial.read());        
-            }
-            changed = true;
-            Serial.println('#');
-            Serial.flush();
-        }    
-        else if(command=='H') {
-            // wait until there's 75 bytes of hue data -- 12 bits per light
-            while(Serial.available()<(XMAS_LIGHT_COUNT*1.5)) {
-                delayMicroseconds(5);
-            }
-      
-            // read the hue data and assign it
-            for(int i=0;i<(XMAS_LIGHT_COUNT/2);i++) {
-                byte b1 = Serial.read();
-                byte b2 = Serial.read();
-                byte b3 = Serial.read();
-                light_hue_array[i*2] = xmas_color((b1>>4), (b1 & 0xF), (b2>>4));      
-                light_hue_array[(i*2)+1] = xmas_color((0xF & b2), (b3>>4), (0xF & b3));      
-            }
-            changed = true;
-            Serial.println('#');
-            Serial.flush();
+          // read the intensity data & assign it
+          for(int i=0;i<XMAS_LIGHT_COUNT;i++) {
+            light_intensity_array[i] = min(XMAS_DEFAULT_INTENSITY, Serial.read());        
+          }
+          changed = true;
+          Serial.println('#');
+          Serial.flush();
+      }    
+      else if(command=='H') {                             
+         
+        int current_light = 0;
+         
+        while(Serial.available()<(XMAS_LIGHTS_PER_STRING*1.5)) {
+          delayMicroseconds(1);
         }
+          
+        // read the hue data and assign it
+        for(int i=0;i<(XMAS_LIGHTS_PER_STRING/2);i++) {
+          byte b1 = Serial.read();
+          byte b2 = Serial.read();
+          byte b3 = Serial.read();
+          light_hue_array[current_light] = xmas_color((b1>>4), (b1 & 0xF), (b2>>4));      
+          current_light++;
+          light_hue_array[current_light] = xmas_color((0xF & b2), (b3>>4), (0xF & b3));      
+          current_light++;
+        }  
+           
+        Serial.println('#');
+            
+        while(Serial.available()<(XMAS_LIGHTS_PER_STRING*1.5)) {
+          delayMicroseconds(1);
+        }
+          
+        // read the hue data and assign it
+        for(int i=0;i<(XMAS_LIGHTS_PER_STRING/2);i++) {
+          byte b1 = Serial.read();
+          byte b2 = Serial.read();
+          byte b3 = Serial.read();
+          light_hue_array[current_light] = xmas_color((b1>>4), (b1 & 0xF), (b2>>4));      
+          current_light++;
+          light_hue_array[current_light] = xmas_color((0xF & b2), (b3>>4), (0xF & b3));      
+          current_light++;
+        }  
+           
+        Serial.println('#');  
+
+        changed = true;
+      }
     }
   
     if(changed) {
-        xmas_reflect_array_2(light_hue_array, light_intensity_array);
+      for(int i=0;i<XMAS_LIGHT_COUNT;i++) {      
+        light_intensity_array[i] = XMAS_DEFAULT_INTENSITY;
+      } 
+      xmas_reflect_array_2(light_hue_array, light_intensity_array);
     }
 }   
 
