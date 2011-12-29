@@ -1,4 +1,4 @@
-import gecoloreffects, time, os, signal, fcntl, json
+import gecoloreffects, time, os, signal, fcntl, json, math
 import tornado.httpserver, tornado.ioloop, tornado.web
 
 MAX_MESSAGE_SIZE = 8192
@@ -42,6 +42,11 @@ class ActionHandler(tornado.web.RequestHandler):
         elif mode=='xmas':
             ls.send_message({'_': 'action', 'mode': 'xmas'})
             ls.log('Entering XMAS mode')
+
+        elif mode=='countdown':
+            ls.send_message({'_': 'action', 'mode': 'countdown'})
+            ls.log('Entering Countdown mode')
+
             
 
 class LightServer(object):
@@ -174,11 +179,13 @@ class LightServer(object):
                     if target_light is not None:
                         for i in range(0, len(self.con.lights)):
                             self.con.lights[i] = target_light
+                        self.log('updating hue')
                         self.con.update_hue()
+                        self.log('done')
                         self.current_color = self.color
                 self.delay(0.1)
 
-            elif self.mode=='xmas':
+            elif self.mode=='xmas':            
                 red = gecoloreffects.Light.XMAS_COLOR_RED()
                 green = gecoloreffects.Light.XMAS_COLOR_GREEN()
                 while True:
@@ -189,6 +196,23 @@ class LightServer(object):
                             self.con.lights[j] = ((j+i)%2)==0 and green or red
                         self.con.update_hue()
                         self.delay(0.5)
+                        
+            elif self.mode=='countdown':
+                lights = []
+                FRAMES = 23
+                for i in range(0, FRAMES):
+                    lights.append(gecoloreffects.Light(16, 16, 15, math.floor(gecoloreffects.Light.MAX_INTENSITY * (i/(1.0*FRAMES)))))
+                for j in range(0, len(self.con.lights)):                        
+                    self.con.lights[j] = lights[0]
+                self.con.update_hue()                
+                while True:
+                    if self.mode!='countdown': break
+                    for i in range(0, FRAMES):                        
+                        for j in range(0, len(self.con.lights)):                        
+                            self.con.lights[j] = lights[-i]
+                        self.con.update_intensity()
+                        self.delay(1.0 / (FRAMES * 1.0))
+                            
 
             else:
                 self.delay(0.1)

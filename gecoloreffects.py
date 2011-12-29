@@ -91,17 +91,18 @@ class Controller(object):
     def update_hue(self):
         self.ser.write('H')
         
-        for i in range(0, len(self.lights)/2):
-            light_a = self.lights[i*2]
-            light_b = self.lights[(i*2)+1]
+        for string_offset in (0, LIGHTS_PER_STRING):
+            for i in range(0, LIGHTS_PER_STRING/2):
+                light_a = self.lights[string_offset + (i*2)]
+                light_b = self.lights[string_offset + ((i*2)+1)]
 
-            light_a.safe()
-            light_b.safe()
-            
-            self.ser.write(chr((light_a.r<<4) | light_a.g))
-            self.ser.write(chr((light_a.b<<4) | light_b.r))
-            self.ser.write(chr((light_b.g<<4) | light_b.b))            
+                light_a.safe()
+                light_b.safe()
 
-        # wait for ack
-        self.ser.readline()
+                self.ser.write(chr((light_a.r<<4) | light_a.g))
+                self.ser.write(chr((light_a.b<<4) | light_b.r))
+                self.ser.write(chr((light_b.g<<4) | light_b.b))            
+
+            # need to do this twice due to the 128 byte buffer on the arduino serial
+            self.ser.readline()
         

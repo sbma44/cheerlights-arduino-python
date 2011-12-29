@@ -32,10 +32,12 @@
 <a href="#" class="button" rel="color" id="blue">&nbsp;</a>
 <a href="#" class="button" rel="color" id="purple">&nbsp;</a>
 <a href="#" class="button" rel="xmas" id="xmas">XMAS</a>
+<a href="#" class="button" rel="countdown" id="xmas">Countdown</a>
 
 <script type="text/javascript">
 $(function(){
   $('a.button').click(function(){
+    // alert('ok');
     var this_id = $(this).attr('id');
     var mode = $(this).attr('rel');
     if (mode=='color')
