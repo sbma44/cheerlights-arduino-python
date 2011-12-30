@@ -197,31 +197,61 @@ void wahoowa() {
   delay(500);
 }  
 
+void wahoowa2() {
+  for(int i=0;i<XMAS_LIGHT_COUNT;i++) {
+    light_hue_array[i] = ((i%2)!=0) ? XMAS_COLOR_BLUE : XMAS_COLOR_ORANGE;
+  }
+  xmas_reflect_array_2(light_hue_array, light_intensity_array);
+  delay(500);
+}  
+
+
    
 void loop()  
 { 
+    noInterrupts();
     boolean changed = false;
   
     if(Serial.available()>0) {
     
       // hue or intensity?
       char command = Serial.read();
-      if (command=='I') {
-          // wait until there's 100 bytes of hue data -- 1 byte per light
-          while(Serial.available()<(XMAS_LIGHT_COUNT)) {
-              delayMicroseconds(1);
-          }
-      
-          // read the intensity data & assign it
-          for(int i=0;i<XMAS_LIGHT_COUNT;i++) {
-            light_intensity_array[i] = min(XMAS_DEFAULT_INTENSITY, Serial.read());        
-          }
+      if (command=='I') {      
           changed = true;
+          
+          int light_index = 0;
+          
+          // really unsure why this sent char is necessary, but w/o it the Serial.available() loop seems to stick
           Serial.println('#');
-          Serial.flush();
+          
+          while(Serial.available()<XMAS_LIGHTS_PER_STRING) {  
+            delayMicroseconds(1);
+          } 
+          
+          // read the intensity data & assign it
+          for(int i=0;i<XMAS_LIGHTS_PER_STRING;i++) {
+            uint8_t b = Serial.read();
+            light_intensity_array[light_index] = b & 0xFF;     
+            light_index++;
+          }
+
+          Serial.println('#');         
+
+          while(Serial.available()<XMAS_LIGHTS_PER_STRING) {  
+            delayMicroseconds(1);
+          } 
+          
+          // read the intensity data & assign it
+          for(int i=0;i<XMAS_LIGHTS_PER_STRING;i++) {
+            uint8_t b = Serial.read();
+            light_intensity_array[light_index] = b & 0xFF;     
+            light_index++;
+          }
+
+          Serial.println('#');
       }    
       else if(command=='H') {                             
-         
+                
         int current_light = 0;
          
         while(Serial.available()<(XMAS_LIGHTS_PER_STRING*1.5)) {
@@ -261,11 +291,9 @@ void loop()
         changed = true;
       }
     }
+    interrupts();
   
-    if(changed) {
-      for(int i=0;i<XMAS_LIGHT_COUNT;i++) {      
-        light_intensity_array[i] = XMAS_DEFAULT_INTENSITY;
-      } 
+    if(changed) { 
       xmas_reflect_array_2(light_hue_array, light_intensity_array);
     }
 }   

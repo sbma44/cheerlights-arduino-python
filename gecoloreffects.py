@@ -97,6 +97,8 @@ class Controller(object):
     def update_hue(self):
         self.ser.write('H')
         
+        # self.ser.readline()
+        
         for string_offset in (0, LIGHTS_PER_STRING):
             for i in range(0, LIGHTS_PER_STRING/2):
                 light_a = self.lights[string_offset + (i*2)]
