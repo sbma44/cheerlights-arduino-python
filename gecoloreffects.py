@@ -82,11 +82,17 @@ class Controller(object):
     def update_intensity(self):
         # send intensity
         self.ser.write('I')
-        for (i,l) in enumerate(self.lights):
-            self.ser.write(chr(l.get_intensity()))            
+        
+        self.ser.readline() # unsure why this is necessary but it is
+        
+        for string_offset in (0, LIGHTS_PER_STRING):
+            for i in range(0, LIGHTS_PER_STRING):
+                l = self.lights[string_offset + i]
+                l.safe()
+                self.ser.write(chr(0xFF & l.intensity))  
 
-        # wait for ack
-        self.ser.readline()
+            # wait for ack -- do this twice        
+            self.ser.readline()
         
     def update_hue(self):
         self.ser.write('H')
