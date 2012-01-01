@@ -1,11 +1,13 @@
-import gecoloreffects, time, os, signal, fcntl, json, math
+import gecoloreffects, time, os, signal, fcntl, json, math, random
 import tornado.httpserver, tornado.ioloop, tornado.web
+from settings import *
 
 MAX_MESSAGE_SIZE = 8192
 HTTP_PORT = 8080
 
 ls = None
 
+OFFSETS = (50, 63, 83, 103, 119, 139)
 COLOR_MAPPINGS = {
     'blue': gecoloreffects.Light.XMAS_COLOR_BLUE(),
     'white': gecoloreffects.Light.XMAS_COLOR_WHITE(),    
@@ -47,7 +49,25 @@ class ActionHandler(tornado.web.RequestHandler):
             ls.send_message({'_': 'action', 'mode': 'countdown'})
             ls.log('Entering Countdown mode')
 
-            
+        elif mode=='waves':
+            ls.send_message({'_': 'action', 'mode': 'waves'})
+            ls.log('Entering WAVVES mode')
+
+        elif mode=='cylon':
+            ls.send_message({'_': 'action', 'mode': 'cylon'})
+            ls.log('They have a plan.')
+
+        elif mode=='sparkle':
+            ls.send_message({'_': 'action', 'mode': 'sparkle'})
+            ls.log('Affirming commitment to Sparkle Motion.')
+
+        elif mode=='train':
+            ls.send_message({'_': 'action', 'mode': 'train'})
+            ls.log('Entering train mode.')
+
+        elif mode=='easter':
+            ls.send_message({'_': 'action', 'mode': 'easter'})
+            ls.log('Entering easter mode.')
 
 class LightServer(object):
     def __init__(self):
@@ -195,27 +215,125 @@ class LightServer(object):
                         for j in range(0, len(self.con.lights)):
                             self.con.lights[j] = ((j+i)%2)==0 and green or red
                         self.con.update_hue()
-                        self.delay(0.5)
-                        
-            elif self.mode=='countdown':
-                lights = []
-                FRAMES = 23
-                for i in range(0, FRAMES):
-                    lights.append(gecoloreffects.Light(16, 16, 15, math.floor(gecoloreffects.Light.MAX_INTENSITY * (i/(1.0*FRAMES)))))
-                for j in range(0, len(self.con.lights)):                        
-                    self.con.lights[j] = lights[0]
-                self.con.update_hue()                
+                        self.delay(0.5)                        
+
+            elif self.mode=='waves':
+                NUM_SEGMENTS = (len(OFFSETS) - 1)
+                COLORS = (gecoloreffects.Light(16, 0, 16), gecoloreffects.Light(16, 16, 0), gecoloreffects.Light(16, 16, 0), gecoloreffects.Light(16, 16, 0), gecoloreffects.Light(16, 16, 0))                
                 while True:
-                    if self.mode!='countdown': break
-                    for i in range(0, FRAMES):                        
-                        for j in range(0, len(self.con.lights)):                        
-                            self.con.lights[j] = lights[-i]
+                    if self.mode!='waves': break
+                    for q in range(0, len(OFFSETS)):
+                        for (i,offset) in enumerate(OFFSETS):
+                            if(i>0):
+                                for l in range(OFFSETS[i-1], OFFSETS[i]):
+                                    self.con.lights[l % len(self.con.lights)] = COLORS[(q+i) % len(COLORS)]
+                        self.con.update_hue()                        
+                        self.delay(0.15)
+
+            elif self.mode=='train':
+                COLORS = (gecoloreffects.Light(16, 0, 16), gecoloreffects.Light(16, 16, 0), gecoloreffects.Light(0, 16, 16))
+                TRAIN_LENGTH = 15
+                offset = 0
+                while True:
+                    if self.mode!='train': break
+                    for i in range(0, len(self.con.lights)):
+                        self.con.lights[(i + LIGHTS_PER_STRING) % NUM_LIGHTS] = COLORS[((i+offset)/TRAIN_LENGTH) % len(COLORS)]
+
+                    self.con.update_hue()                        
+                    self.delay(0.05)        
+
+                    offset = (offset + 1) % 1000000000
+
+            elif self.mode=='sparkle':
+                colors = []
+                for i in range(16, 2, -1):
+                    colors.append( gecoloreffects.Light(16, 16, i) )
+
+                state = []
+                for i in range(0, len(self.con.lights)):
+                    state.append(0)
+
+                while True:
+                    if self.mode!='sparkle': break
+                    for i in range(0, len(self.con.lights)):
+                        self.con.lights[i] = colors[state[i]]
+                        state[i] = max(state[i]-1, 0)
+                        if random.random()<0.2:
+                            state[i] = len(colors)-1
+
+                    self.con.update_hue()                        
+                    self.delay(0.07)        
+                
+            elif self.mode=='easter':
+                STEP = 8
+                black = gecoloreffects.Light(0,0,0)
+                while True:
+                    if self.mode!='easter': 
+                        for i in range(0, len(self.con.lights)):
+                            self.con.lights[i].intensity = gecoloreffects.Light.MAX_INTENSITY
                         self.con.update_intensity()
-                        self.delay(1.0 / (FRAMES * 1.0))
-                            
+                        self.delay(0.05)
+                        break
+
+                    for b in range(0, 0xCC, STEP):
+                        for i in range(0, len(self.con.lights)):
+                            self.con.lights[i].intensity = b
+                        self.con.update_intensity()    
+                        self.delay(0.02)
+
+                    for b in range(0xCC, 0, (-2*STEP)):
+                        for i in range(0, len(self.con.lights)):
+                            self.con.lights[i].intensity = b
+                        self.con.update_intensity()    
+                        self.delay(0.02)
+
+                    for i in range(0, len(self.con.lights)):
+                        self.con.lights[i].random_color()
+                        self.con.lights[i].intensity = 0
+                    self.delay(0.05)
+                    self.con.update_intensity()        
+                    self.delay(0.05)
+                    self.con.update_hue()
+                    self.delay(0.05)
+            
+            elif self.mode=='cylon':
+                
+                COLORS = (gecoloreffects.Light(16, 0, 0), gecoloreffects.Light(6, 0, 0), gecoloreffects.Light(3, 0, 0), gecoloreffects.Light(0, 0, 0))            
+                SEGMENT_OFFSETS = (50, 63, 83, 103, 119, 139)
+                
+                for q in range(0, len(self.con.lights)):
+                    self.con.lights[q] = COLORS[-1]
+                self.con.update_hue()
+                time.sleep(0.1)
+
+                global_offset = 0
+                while True:
+                    if self.mode!='cylon': break
+                    for q in range(0, len(self.con.lights)):
+                        self.con.lights[q] = COLORS[-1]
+
+                    for segment in range(0, len(SEGMENT_OFFSETS)-1):
+                        start = SEGMENT_OFFSETS[segment]
+                        end = SEGMENT_OFFSETS[segment+1]
+                        sequence_length = (end - start) * 2
+
+                        progress = start + (global_offset % sequence_length)
+                        for i in range(0, len(COLORS)):
+                            position = progress + i
+                            if position<end:
+                                self.con.lights[position % len(self.con.lights)] = COLORS[len(COLORS) - (i+1)]
+                            else:          
+                                new_pos = end - ((global_offset + i) % (end-start))
+                                self.con.lights[new_pos % len(self.con.lights)] = COLORS[len(COLORS) - (i+1)]                
+
+                    global_offset = (global_offset + 1) % 100000000        
+
+                    self.con.update_hue()
+
+                    self.delay(0.05)
 
             else:
-                self.delay(0.1)
+                self.delay(0.01)
                 
     def finish(self):
         """ Clean up lingering processes """
