@@ -7,6 +7,43 @@ from settings import *
 HTTP_PORT = 8080
 
 class DataHandler(tornado.web.RequestHandler):
+    
+    def _json_is_valid(self, data):
+        is_valid = True
+        if type(data) is not list:
+            is_valid = False
+        else:
+            for frame in data:
+                if type(frame) is not dict:
+                    is_valid = False
+                else:
+                    if ('delay' not in frame) or ('lights' not in frame):
+                        is_valid = False
+                    else:
+                        try:
+                            if float(frame['delay'])<(1.0/24):
+                                is_valid = False
+                        except:
+                            is_valid = False
+                        if type(frame['lights'] is not list):
+                            is_valid = False
+                        elif len(frame['lights']) != NUM_LIGHTS:
+                            is_valid = False
+                        else:
+                            for l in frame['lights']:
+                                if type(l) is not list:
+                                    is_valid = False
+                                elif len(l) != 3:
+                                    is_valid = False
+                                else:
+                                    for b in l:
+                                        try:
+                                            if int(b)<0 or int(b)>15:
+                                                is_valid = False
+                                        except:
+                                            is_valid = False
+        return is_valid
+
     def get(self): 
         self.set_header("Content-Type", "text/plain")
         self.write("Try something like:\n\n   curl --data \"q=`node xmas.js`\" http://rpi-lights:8080/\n\nwhere xmas.js is https://gist.github.com/sbma44/9e63ac4c61ff07ca6707")
@@ -14,10 +51,14 @@ class DataHandler(tornado.web.RequestHandler):
     def post(self):
         try:
             data = json.loads(self.get_argument('q'))
-            rdis = redis.StrictRedis(host='localhost', port=6379, db=0)
-            rdis.set('data', data)
+
+            if self._json_is_valid(data):
+                rdis = redis.StrictRedis(host='localhost', port=6379, db=0)
+                rdis.set('data', data)
+            else:
+                self.set_status(400, 'Bad input data. Ensure delay is >=%0.2fs and you have specified %d lights' % ((30.0 / 24), NUM_LIGHTS))
         except:
-            pass
+            self.set_status(500, 'Error (probably from parsing bad JSON')
         
 class LightServer(object):
     def __init__(self):
