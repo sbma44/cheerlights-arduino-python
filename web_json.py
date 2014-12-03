@@ -25,7 +25,7 @@ class DataHandler(tornado.web.RequestHandler):
                                 is_valid = False
                         except:
                             is_valid = False
-                        if type(frame['lights'] is not list):
+                        if type(frame['lights']) is not list:
                             is_valid = False
                         elif len(frame['lights']) != NUM_LIGHTS:
                             is_valid = False
