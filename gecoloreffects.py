@@ -1,6 +1,16 @@
-import serial, random, time, colorsys
+import serial, random, time, colorsys, os
 from settings import *
 
+class FakeSerial(object):
+    def __init__(self):
+        super(FakeSerial, self).__init__()
+    
+    def write(self, x):
+        print x
+    
+    def readline(self):
+        return
+        
 
 class Light(object):
     MAX_INTENSITY = 0xCC
@@ -76,8 +86,13 @@ class Controller(object):
         for i in range(0, NUM_LIGHTS):
             self.lights.append(Light().random_color())
 
-        self.ser = serial.Serial(SERIAL_PORT, SERIAL_RATE)
-        time.sleep(2) # wait for the Arduino to reboot
+        self.RPI = (os.uname()[-1] == 'armv6l')
+
+        if self.RPI:
+            self.ser = serial.Serial(SERIAL_PORT, SERIAL_RATE)
+            time.sleep(2) # wait for the Arduino to reboot
+        else:
+            self.ser = FakeSerial()
 
     def update_intensity(self):
         # send intensity
