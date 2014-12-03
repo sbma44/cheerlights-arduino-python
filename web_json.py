@@ -54,11 +54,11 @@ class DataHandler(tornado.web.RequestHandler):
 
             if self._json_is_valid(data):
                 rdis = redis.StrictRedis(host='localhost', port=6379, db=0)
-                rdis.set('data', data)
+                rdis.set('data', json.dumps(data))
             else:
                 self.set_status(400, 'Bad input data. Ensure delay is >=%0.2fs and you have specified %d lights' % ((30.0 / 24), NUM_LIGHTS))
         except:
-            self.set_status(500, 'Error (probably from parsing bad JSON')
+            self.set_status(500, 'Error (probably from parsing bad JSON)')
         
 class LightServer(object):
     def __init__(self):
@@ -87,11 +87,10 @@ class LightServer(object):
         self.log('In event loop')
         data = None
         while True:            
-            try:
-                newdata = self.redis.get('data')
+            
+            newdata = self.redis.get('data')
+            if newdata is not None and len(newdata):
                 data = json.loads(newdata)
-            except:
-                pass
             
             try:
                 if data is not None:
