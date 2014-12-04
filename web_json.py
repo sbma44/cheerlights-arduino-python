@@ -95,6 +95,8 @@ class LightServer(object):
             if newdata is not None and len(newdata):
                 data = json.loads(newdata)
             
+            did_something = False
+
             try:
                 if data is not None:
                     for frame in data:
@@ -105,11 +107,14 @@ class LightServer(object):
                                 self.con.lights[i].g = lights[i][1]
                                 self.con.lights[i].b = lights[i][2]
                         self.con.update_hue()
+                        did_something = True
                         time.sleep(float(frame.get('delay', 0.5)))
             except:
                 data = None
 
-            time.sleep(0.1)
+            # if we didn't have any frames to play, avoid slamming redis
+            if not did_something:
+                time.sleep(0.1)
                 
     def finish(self):
         """ Clean up lingering processes """
