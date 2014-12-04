@@ -1,3 +1,6 @@
+#!/home/pi/.virtualenvs/cheerlights/bin/python
+
+
 import gecoloreffects, time, os, signal, fcntl, json, math, random
 import tornado.httpserver, tornado.ioloop, tornado.web
 import redis
