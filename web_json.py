@@ -15,6 +15,8 @@ class DataHandler(tornado.web.RequestHandler):
         is_valid = True
         if type(data) is not list:
             is_valid = False
+        elif len(data)>30:
+            is_valid = False
         else:
             for frame in data:
                 if type(frame) is not dict:
@@ -24,7 +26,7 @@ class DataHandler(tornado.web.RequestHandler):
                         is_valid = False
                     else:
                         try:
-                            if float(frame['delay'])<(1.0/24):
+                            if (float(frame['delay'])<(1.0/24)) or (float(frame['delay'])>10):
                                 is_valid = False
                         except:
                             is_valid = False
@@ -49,7 +51,7 @@ class DataHandler(tornado.web.RequestHandler):
 
     def get(self): 
         self.set_header("Content-Type", "text/plain")
-        self.write("Try something like:\n\n   curl --data \"q=`node xmas.js`\" http://rpi-lights:8080/\n\nwhere xmas.js is https://gist.github.com/sbma44/9e63ac4c61ff07ca6707")
+        self.write("Try something like:\n\n   curl --data \"q=`node xmas.js`\" http://rpi-lights.local:8080/\n\nwhere xmas.js is https://gist.github.com/sbma44/9e63ac4c61ff07ca6707")
 
     def post(self):
         try:
