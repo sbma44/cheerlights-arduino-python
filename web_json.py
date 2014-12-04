@@ -15,8 +15,8 @@ class DataHandler(tornado.web.RequestHandler):
         is_valid = True
         if type(data) is not list:
             is_valid = False
-        elif len(data)>30:
-            is_valid = False
+        #elif len(data)>30:
+        #    is_valid = False
         else:
             for frame in data:
                 if type(frame) is not dict:
